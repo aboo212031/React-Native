@@ -5,9 +5,11 @@ import { images } from "../../constants";
 import FormField from "../../components/FormField";
 import CustomButtom from "../../components/CustomButton";
 import { Link, router } from "expo-router";
-import { signIn } from "../../lib/appwrite";
+import { getCurrentUser, signIn } from "../../lib/appwrite";
+import { useGlobalContext } from "../../context/GlobalProvider";
 
 const SignIn = () => {
+  const { setUser, setIsLoggedIn } = useGlobalContext();
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -15,7 +17,7 @@ const SignIn = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const submit = () => {
+  const submit = async () => {
     if (!form.email || !form.password) {
       Alert.alert("Error", "Please Fill In All Fields");
     }
@@ -23,8 +25,10 @@ const SignIn = () => {
     setIsSubmitting(true);
 
     try {
-      const results = signIn(form.email, form.password);
-
+      await signIn(form.email, form.password);
+      const results = await getCurrentUser();
+      setUser(results);
+      setIsLoggedIn(true);
       router.replace("/home");
     } catch (error) {
       Alert.alert("Error", error.message);
@@ -49,7 +53,7 @@ const SignIn = () => {
             title="Email"
             value={form.email}
             handleChangeText={(e) =>
-              setForm({ ...form, email: e.nativeEvent.text })
+              setForm({ ...form, email: e.nativeEvent.text.toLowerCase() })
             }
             otherStyles="mt-7 "
             keyboardType="email-address"
